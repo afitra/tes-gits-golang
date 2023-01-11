@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"gits/auth"
+	"gits/author"
 	"gits/handler"
 	"gits/user"
 
@@ -40,21 +41,31 @@ func main() {
 	}
 
 	dataBase.Debug().AutoMigrate(
-		&user.User{})
+		&user.User{},
+		&author.Author{},
+	)
 	fmt.Println("\n koneksi dataBase berhasil *******\n")
 
 	userRepository := user.NewRepository(dataBase)
+	authorRepository := author.NewRepository(dataBase)
 
 	userService := user.NewService(userRepository)
+	authorService := author.NewService(authorRepository)
 	authService := auth.NewService()
 
 	userHandler := handler.NewUserHandler(userService, authService)
+	authorHandler := handler.NewAuthorHandler(authorService)
 
 	router := gin.Default()
 	api := router.Group("/api")
 
-	api.POST("/register", userHandler.RegisterUser)
-	api.POST("/login", userHandler.Login)
+	api.POST("/user/register", userHandler.RegisterUser)
+	api.POST("/user/login", userHandler.Login)
+
+	api.POST("/author/register", authorHandler.RegisterAuthor)
+	api.GET("/author/:id", authorHandler.GetAuthorById)
+	api.PUT("/author/:id", authorHandler.UpdateAuthorById)
+	api.DELETE("/author/:id", authorHandler.DestroyAuthorById)
 
 	router.Run(":3000")
 
