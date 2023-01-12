@@ -9,6 +9,7 @@ import (
 	"gits/author"
 	"gits/book"
 	"gits/handler"
+	Middleware "gits/middleware"
 	"gits/publisher"
 	"gits/user"
 
@@ -73,20 +74,20 @@ func main() {
 	api.POST("/user/register", userHandler.RegisterUser)
 	api.POST("/user/login", userHandler.Login)
 
-	api.POST("/author/register", authorHandler.RegisterAuthor)
-	api.GET("/author/:id", authorHandler.GetAuthorById)
-	api.PUT("/author/:id", authorHandler.UpdateAuthorById)
-	api.DELETE("/author/:id", authorHandler.DestroyAuthorById)
+	api.POST("/author/register", Middleware.IsLogin(authService, userService), authorHandler.RegisterAuthor)
+	api.GET("/author/:id", Middleware.IsLogin(authService, userService), authorHandler.GetAuthorById)
+	api.PUT("/author/:id", Middleware.IsLogin(authService, userService), authorHandler.UpdateAuthorById)
+	api.DELETE("/author/:id", Middleware.IsLogin(authService, userService), authorHandler.DestroyAuthorById)
 
-	api.POST("/publisher/register", publisherHandler.RegisterPublisher)
-	api.GET("/publisher/:id", publisherHandler.GetPublisherById)
-	api.PUT("/publisher/:id", publisherHandler.UpdatePublisherById)
-	api.DELETE("/publisher/:id", publisherHandler.DestroyPublisherById)
+	api.POST("/publisher/register", Middleware.IsLogin(authService, userService), publisherHandler.RegisterPublisher)
+	api.GET("/publisher/:id", Middleware.IsLogin(authService, userService), publisherHandler.GetPublisherById)
+	api.PUT("/publisher/:id", Middleware.IsLogin(authService, userService), publisherHandler.UpdatePublisherById)
+	api.DELETE("/publisher/:id", Middleware.IsLogin(authService, userService), publisherHandler.DestroyPublisherById)
 
-	api.POST("/book/register", bookHandler.RegisterBook)
-	api.GET("/book/:id", bookHandler.GetBookById)
-	api.PUT("/book/:id", bookHandler.UpdateBookById)
-	api.DELETE("/book/:id", bookHandler.DestroyBookById)
+	api.POST("/book/register", Middleware.IsLogin(authService, userService), bookHandler.RegisterBook)
+	api.GET("/book/:id", Middleware.IsLogin(authService, userService), bookHandler.GetBookById)
+	api.PUT("/book/:id", Middleware.IsLogin(authService, userService), bookHandler.UpdateBookById)
+	api.DELETE("/book/:id", Middleware.IsLogin(authService, userService), bookHandler.DestroyBookById)
 
 	router.Run(":3000")
 
