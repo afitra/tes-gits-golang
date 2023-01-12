@@ -11,6 +11,7 @@ import (
 	"gits/handler"
 	Middleware "gits/middleware"
 	"gits/publisher"
+	"gits/redisClient"
 	"gits/user"
 
 	"github.com/gin-gonic/gin"
@@ -52,10 +53,17 @@ func main() {
 
 	fmt.Println("\n koneksi dataBase berhasil *******\n")
 
+	var redisHost = "localhost:6379"
+	var redisPassword = "root"
+
+	rds := redisClient.ConnectRedisClient(redisHost, redisPassword)
+
+	fmt.Println("\n koneksi Redis berhasil *******\n")
+
 	userRepository := user.NewRepository(dataBase)
-	authorRepository := author.NewRepository(dataBase)
-	publisherRepository := publisher.NewRepository(dataBase)
-	bookRepository := book.NewRepository(dataBase)
+	authorRepository := author.NewRepository(dataBase, rds)
+	publisherRepository := publisher.NewRepository(dataBase, rds)
+	bookRepository := book.NewRepository(dataBase, rds)
 
 	userService := user.NewService(userRepository)
 	authorService := author.NewService(authorRepository)

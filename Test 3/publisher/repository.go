@@ -1,6 +1,14 @@
 package publisher
 
-import "gorm.io/gorm"
+import (
+	"encoding/json"
+	"fmt"
+	"gits/redisClient"
+	"strconv"
+
+	"github.com/go-redis/redis/v9"
+	"gorm.io/gorm"
+)
 
 type Repository interface {
 	Create(publisher Publisher) (Publisher, error)
@@ -10,11 +18,12 @@ type Repository interface {
 }
 
 type repository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rds *redis.Client
 }
 
-func NewRepository(db *gorm.DB) *repository {
-	return &repository{db}
+func NewRepository(db *gorm.DB, rds *redis.Client) *repository {
+	return &repository{db, rds}
 
 }
 
@@ -29,15 +38,38 @@ func (r *repository) Create(publisher Publisher) (Publisher, error) {
 
 func (r *repository) FindById(ID int) (Publisher, error) {
 
+	key := "publisher" + strconv.Itoa(ID)
+	jsonString := redisClient.GetData(r.rds, key)
+
 	var publisher Publisher
 
-	err := r.db.Where("id = ?", ID).Find(&publisher).Error
+	if jsonString != "false" {
+		fmt.Println("  cache")
+		var jsonData = []byte(jsonString)
+		var data Publisher
 
-	if err != nil {
+		var err = json.Unmarshal(jsonData, &data)
+		if err != nil {
 
-		return publisher, err
+			return publisher, err
+		}
+
+		return data, nil
+	} else {
+		fmt.Println("no cache")
+		err := r.db.Where("id = ?", ID).Find(&publisher).Error
+
+		if err != nil {
+
+			return publisher, err
+		}
+		jsonData, _ := json.Marshal(publisher)
+
+		redisClient.SetData(r.rds, key, string(jsonData))
+
+		return publisher, nil
 	}
-	return publisher, nil
+
 }
 
 func (r *repository) Update(publisher Publisher) (Publisher, error) {
@@ -48,6 +80,13 @@ func (r *repository) Update(publisher Publisher) (Publisher, error) {
 
 		return publisher, err
 	}
+
+	key := "publisher" + strconv.Itoa(publisher.ID)
+
+	jsonData, _ := json.Marshal(publisher)
+
+	redisClient.SetData(r.rds, key, string(jsonData))
+
 	return publisher, nil
 
 }
