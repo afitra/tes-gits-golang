@@ -7,6 +7,7 @@ import (
 
 	"gits/auth"
 	"gits/author"
+	"gits/book"
 	"gits/handler"
 	"gits/publisher"
 	"gits/user"
@@ -45,21 +46,26 @@ func main() {
 		&user.User{},
 		&author.Author{},
 		&publisher.Publisher{},
+		&book.Book{},
 	)
+
 	fmt.Println("\n koneksi dataBase berhasil *******\n")
 
 	userRepository := user.NewRepository(dataBase)
 	authorRepository := author.NewRepository(dataBase)
 	publisherRepository := publisher.NewRepository(dataBase)
+	bookRepository := book.NewRepository(dataBase)
 
 	userService := user.NewService(userRepository)
 	authorService := author.NewService(authorRepository)
 	publisherService := publisher.NewService(publisherRepository)
+	bookService := book.NewService(bookRepository)
 	authService := auth.NewService()
 
 	userHandler := handler.NewUserHandler(userService, authService)
 	authorHandler := handler.NewAuthorHandler(authorService)
 	publisherHandler := handler.NewPublisherHandler(publisherService)
+	bookHandler := handler.NewBookHandler(bookService)
 
 	router := gin.Default()
 	api := router.Group("/api")
@@ -76,6 +82,11 @@ func main() {
 	api.GET("/publisher/:id", publisherHandler.GetPublisherById)
 	api.PUT("/publisher/:id", publisherHandler.UpdatePublisherById)
 	api.DELETE("/publisher/:id", publisherHandler.DestroyPublisherById)
+
+	api.POST("/book/register", bookHandler.RegisterBook)
+	api.GET("/book/:id", bookHandler.GetBookById)
+	api.PUT("/book/:id", bookHandler.UpdateBookById)
+	api.DELETE("/book/:id", bookHandler.DestroyBookById)
 
 	router.Run(":3000")
 
